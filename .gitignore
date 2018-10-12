@@ -1,5 +1,6 @@
 .venv/
 .idea/
+main/temp/
 main/__pycache__
 main/config.py
 
