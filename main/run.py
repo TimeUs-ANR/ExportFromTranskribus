@@ -28,25 +28,26 @@ def authentificate():
     return id_session
 
 
-def list_user_s_collections(id_session):
-    """Get a list of all collections accessible to the authentified user on Transkribus in the form of a list of names and IDs as tuples.
+def get_user_s_collections(id_session):
+    """Get a list of all collections accessible to the authentified user on Transkribus in the form of a dictionnary with names as keys and IDs as values.
 
     :param id_session: session ID
     :type id_session: string
-    :return: list of collection names and IDs
-    :rtype: list"""
+    :return: collection names and IDs
+    :rtype: dict"""
 
     url = "https://transkribus.eu/TrpServer/rest/collections/list"
     querystring = {"JSESSIONID": id_session}
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
 
-    collection_list = []
-    [collection_list.append((collection["colName"], collection["colId"])) for collection in json_file]
-    return collection_list
+    collection_dict = {}
+    [collection_dict.update({collection["colName"] : collection["colId"]}) for collection in json_file]
+    return collection_dict
+
 
 # VERIFY INPUT DATA
-def verify_input_type(username, password, status, collectionnames):
+def verify_input_type():
     """Takes data input from configuration file and verify their type.
 
     :param username: user name
@@ -94,20 +95,39 @@ def validate_status(status):
     if len(status_invalid) > 0:
         print("Invalid status input: %s" % (str(status_invalid).strip('[]')))
     if len(status_valid) == 0:
-        print("No valid status to work with. Please correct status list in config.py!")
+        print("No valid status to work with. Please correct list of statuses in config.py!")
     return status_valid
+
+def list_valid_id_collection(collections_name_user):
+    """Compares list of collection names given in configuration file and verify that the user can access them. Then makes a list of valid collection id.
+
+    :param collections_name_user: all collection accessible to user
+    :type collections_name_user: dict
+    :return: list of valid collection id
+    :rtype: list
+    """
+    id_collection_list = []
+    for input_collection_name in collectionnames:
+        if input_collection_name in collections_name_user:
+            id_collection_list.append(collections_name_user[input_collection_name])
+        else:
+            print("User has no access to \"%s\", or this collection does not exist." % input_collection_name)
+    if len(id_collection_list) == 0:
+        print("No valid collection to work with. Please, correct list of collection names in config.py!")
+    return id_collection_list
 
 # SCRIPT BODY ---------------------------------------------------------------------------------------------------------
 
-errors_input_type = verify_input_type(username, password, status, collectionnames)
+# VERIFICATIONS (STATUS, COLLECTIONS NAMES) and AUTHENTIFICATION
+errors_input_type = verify_input_type()
 if errors_input_type == 0:
     status_valid = validate_status(status)
     if len(status_valid) > 0:
         id_session = authentificate()
         if id_session:
-            collection_list = list_user_s_collections(id_session)
+            user_collections_dict = get_user_s_collections(id_session)
+            if len(user_collections_dict) > 0:
+                id_collection_list = list_valid_id_collection(user_collections_dict)
 
-            # compare collection of list accessible to user and collectionnames given in input
-            # start extracting process.
-
-
+                    for id_collection in id_collection_list:
+                        id_document_list = list_id_document(id_collection)
