@@ -1,3 +1,7 @@
 .venv/
-main/__pycache__
 .idea/
+main/temp/
+main/__pycache__
+main/config.py
+
+
