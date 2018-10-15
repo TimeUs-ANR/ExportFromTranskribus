@@ -53,8 +53,8 @@ def get_user_s_collections(id_session):
     :param id_session: session ID
     :type id_session: string
     :return: collection names and IDs
-    :rtype: dict"""
-
+    :rtype: dict
+    """
     url = "https://transkribus.eu/TrpServer/rest/collections/list"
     querystring = {"JSESSIONID": id_session}
     response = requests.request("GET", url, params=querystring)
@@ -84,12 +84,16 @@ def list_id_document(id_session, id_collection):
 
 
 def list_pages(id_session, id_collection, id_document):
-    """
+    """Creates a list of all transcriptions available for the pages of a document with their metadata.
 
-    :param id_session:
-    :param id_collection:
-    :param id_document:
-    :return:
+    :param id_session: session ID
+    :type id_session: string
+    :param id_collection: collection ID
+    :type id_collection: int
+    :param id_document: document ID
+    :type id_document: int
+    :return: tuple made of document's metadata and document's list of transcripts
+    :rtype: tuple
     """
     url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" % (id_collection, id_document)
     querystring = {"JSESSIONID": id_session}
@@ -99,10 +103,7 @@ def list_pages(id_session, id_collection, id_document):
     metadata = json_file["md"]
     return metadata, page_list
 
-
-# SCRIPT BODY ---------------------------------------------------------------------------------------------------------
-
-# VERIFICATIONS (STATUS, COLLECTIONS NAMES) and AUTHENTIFICATION
+# VERIFICATIONS (status, collection names) and authentification
 errors = []
 if not(isinstance(username, str)):
     errors.append("username must be a string. ")
@@ -114,7 +115,7 @@ if not(isinstance(collectionnames, list)):
     errors.append("collectionnames must be a list. ")
 
 if len(errors) > 0:
-    print("Invalid data input: %s" % (str(errors).strip("['']")))
+    print("Invalid input: %s" % (str(errors).strip("['']")))
 else:
     ref_status = ["NEW", "IN PROGRESS", "DONE", "FINAL"]
     status_valid = []
@@ -149,13 +150,14 @@ else:
                 if len(id_collection_list) == 0:
                     print("No valid collection to work with. Please, correct list of collection names in config.py!")
                 else:
+                    # EXPORTING transcriptions from Transkribus by collection, document, page
                     for id_collection, name_collection in id_collection_list:
                         id_document_list = list_id_document(id_session, id_collection)
                         if len(id_document_list) == 0:
                             print("No document in %s.") % name_collection
                         else:
                             all_collection = ''
-                            all_collection = all_collection + ";\n" + name_collection
+                            all_collection = all_collection + name_collection + ";\n"
                             path_to_coll_dir = os.path.join(path_to_main_dir, name_collection)
                             create_directory(path_to_coll_dir)
 
@@ -174,6 +176,7 @@ else:
                                 d = doc_title.replace("/", "-").replace("\\", "-")
                                 path_to_doc_dir = os.path.join(path_to_coll_dir, "%s - %s") % (id_document, d)
 
+                                # ADDING data into PAGE files under 'temp' name space
                                 for page in page_list:
                                     page_status = page["tsList"]["transcripts"][0]["status"]
                                     page_ts_url = page["tsList"]["transcripts"][0]["url"]
@@ -230,14 +233,10 @@ else:
                                                         soup.Metadata.append(tag)
                                                 with open(path_to_transcript, "w") as f:
                                                     f.write(str(soup))
+                    # Reporting on the export
                     path_to_report = os.path.join(path_to_main_dir, "general-report.txt")
-
-                    report = """
-                    Export request ran on %s/%s/%s at %s:%s.
-                    
-                    From user '%s', exported transcript with status '%s' from following collections: 
-                    %s""" % (now.day, now.month,now.year, now.hour, now.minute, username, all_status, all_collection)
+                    report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month,now.year, now.hour, now.minute, username, all_status, all_collection)
                     with open(path_to_report, "w") as f:
                         f.write(report)
                     print("Successfully exported transcriptions from Transkribus!")
-                    print("Files are stored in %s directory.") % path_to_main_dir
+                    print("Files are stored in %s directory." % path_to_main_dir)
