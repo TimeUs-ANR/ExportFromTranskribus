@@ -11,8 +11,8 @@ password = ""
 collections = [""]
 
 # target status(es) / statut(s) ciblé(s)
-# values limited to : NEW, IN PROGRESS, DONE or FINAL / les valeurs sont limitées à : NEW, IN PROGRESS, DONE ou FINAL
-# e.g. - status = ["FINAL"] or status = ["DONE", "IN PROGRESS"]
+# values limited to : NEW, IN_PROGRESS, DONE or FINAL / les valeurs sont limitées à : NEW, IN_PROGRESS, DONE ou FINAL
+# e.g. - status = ["FINAL"] or status = ["DONE", "IN_PROGRESS"]
 status = [""]
 
 
