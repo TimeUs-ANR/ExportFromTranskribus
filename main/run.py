@@ -195,6 +195,11 @@ else:
                                             tag_title = tag_title.title.extract()
                                             tag_title.name = "temp:title"
 
+                                            t_uploader = "<uploader>%s</uploader>" % doc_uploader
+                                            tag_uploader = BeautifulSoup(t_uploader, "xml")
+                                            tag_uploader = tag_uploader.uploader.extract()
+                                            tag_uploader.name = "temp:uploader"
+
                                             t_desc = "<desc>%s</desc>" % doc_desc
                                             tag_desc = BeautifulSoup(t_desc, "xml")
                                             tag_desc = tag_desc.desc.extract()
@@ -228,6 +233,7 @@ else:
                                                 soup.Metadata.append(tag_desc)
                                                 soup.Metadata.append(tag_nb)
                                                 soup.Metadata.append(tag_status)
+                                                soup.Metadata.append(tag_uploader)
                                                 if len(doc_lang) > 0:
                                                     for tag in tag_lang_list:
                                                         soup.Metadata.append(tag)
