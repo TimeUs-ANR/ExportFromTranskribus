@@ -7,8 +7,8 @@ username = ""
 password = ""
 
 # names of targeted collection(s) / nom de(s) collection(s) ciblée(s)
-# e.g. - collectionnames = ["collectionA", "collectionB", "collectionC"]
-collectionnames = [""]
+# e.g. - collections = ["collectionA", "collectionB", "collectionC"]
+collections = [""]
 
 # target status(es) / statut(s) ciblé(s)
 # values limited to : NEW, IN PROGRESS, DONE or FINAL / les valeurs sont limitées à : NEW, IN PROGRESS, DONE ou FINAL
