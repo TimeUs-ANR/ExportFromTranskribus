@@ -4,17 +4,21 @@ import requests
 import datetime
 import os
 import json
+import subprocess
 from bs4 import BeautifulSoup
 from config import username, password, status, collections
 
 # CONSTANTS
 now = datetime.datetime.now()
 TIMESTAMP = "%s-%s-%s-%s-%s" % (now.year, now.month, now.day, now.hour, now.minute)
-
 CWD = os.path.dirname(os.path.abspath(__file__))
+SAXON_JAR = "saxon9he.jar"      # Change value if using a different version of Saxon
+                                # Saxon file must be placed in "main/" directory
+PAGE2TEI = "page2tei_TU.xsl"    # Change value if using a different version of Page2tei XSLT
+                                # Page2tei file must be place in "main/" directory
+
 
 # INTERACTION WITH OS
-
 def create_directory(directory):
     """Create a new directory.
 
@@ -241,10 +245,41 @@ else:
                                                         soup.Metadata.append(tag)
                                                 with open(path_to_transcript, "w") as f:
                                                     f.write(str(soup))
-                    # Reporting on the export
+                    # REPORTING on the export
                     path_to_report = os.path.join(path_to_export_dir, "general-report.txt")
                     report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month,now.year, now.hour, now.minute, username, status_all, coll_all)
                     with open(path_to_report, "w") as f:
                         f.write(report)
                     print("Successfully exported transcriptions from Transkribus!")
+
+                    # TRANSFORMING PAGE files to TEI
+                    env = dict(os.environ)
+                    env["JAVA_OPTS"] = "foo"
+
+                    coll_dir_l = os.listdir(path_to_export_dir)
+                    xslt_coll_l = []
+                    for item in coll_dir_l:
+                        path_abs = os.path.join(path_to_export_dir, item)
+                        if os.path.isdir(path_abs) is True:
+                            xslt_coll_l.append(path_abs)
+
+                    if len(coll_dir_l) > 0:
+                        xslt_doc_l = []
+                        for coll_dir in xslt_coll_l:
+                            doc_dir_l = os.listdir(coll_dir)
+                            for item in doc_dir_l:
+                                path_abs = os.path.join(coll_dir, item)
+                                if os.path.isdir(path_abs) is True:
+                                    xslt_doc_l.append(item)
+
+                            for xslt_input in xslt_doc_l:
+                                xslt_output = os.path.join(coll_dir, "TEI - %s" % xslt_input)
+                                xslt_input = os.path.join(coll_dir, xslt_input)
+                                create_directory(xslt_output)
+                                xslt_output = "-o:" + xslt_output
+                                xslt_input = "-s:" + xslt_input
+                                subprocess.call(["java", "-jar", SAXON_JAR, xslt_input, xslt_output, PAGE2TEI], env=env)
+                        print("Successfully transformed exported PAGE XML files to TEI XML!")
                     print("Files are stored in %s directory." % path_to_export_dir)
+
+
