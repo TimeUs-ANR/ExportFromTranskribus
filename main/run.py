@@ -3,7 +3,7 @@ import datetime
 import os
 import json
 from bs4 import BeautifulSoup
-from config import username, password, status, collectionnames
+from config import username, password, status, collections
 
 # CONSTANTS
 now = datetime.datetime.now()
@@ -38,70 +38,70 @@ def authentificate():
 
     try:
         soup = BeautifulSoup(response.text, "xml")
-        id_session = soup.sessionId.string
+        session_id = soup.sessionId.string
         print("User successfully authentified.")
     except Exception as e:
         print("Authentification failed:")
         print(e)
-        id_session = ''
-    return id_session
+        session_id = ''
+    return session_id
 
 
-def get_user_s_collections(id_session):
+def get_user_s_collections(session_id):
     """Get a list of all collections accessible to the authentified user on Transkribus in the form of a dictionnary with names as keys and IDs as values.
 
-    :param id_session: session ID
-    :type id_session: string
+    :param session_id: session ID
+    :type session_id: string
     :return: collection names and IDs
     :rtype: dict
     """
     url = "https://transkribus.eu/TrpServer/rest/collections/list"
-    querystring = {"JSESSIONID": id_session}
+    querystring = {"JSESSIONID": session_id}
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
 
-    collection_dict = {}
-    [collection_dict.update({collection["colName"] : collection["colId"]}) for collection in json_file]
-    return collection_dict
+    coll_user_s = {}
+    [coll_user_s.update({collection["colName"] : collection["colId"]}) for collection in json_file]
+    return coll_user_s
 
 
-def list_id_document(id_session, id_collection):
+def list_document_id(session_id, coll_id):
     """Get a list of all documents contained by a collection in Transkribus.
 
-    :param id_session: session ID
-    :type id_session: string
-    :param id_collection: collection ID
-    :type id_collection: int
+    :param session_id: session ID
+    :type session_id: string
+    :param coll_id: collection ID
+    :type coll_id: int
     :return: list of document ID
     :rtype: list
     """
-    url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % id_collection
-    querystring = {"JSESSIONID": id_session}
+    url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % coll_id
+    querystring = {"JSESSIONID": session_id}
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
-    id_document_list = [document["docId"] for document in json_file]
-    return id_document_list
+    doc_id_l = [document["docId"] for document in json_file]
+    return doc_id_l
 
 
-def list_pages(id_session, id_collection, id_document):
+def list_pages(session_id, coll_id, doc_id):
     """Creates a list of all transcriptions available for the pages of a document with their metadata.
 
-    :param id_session: session ID
-    :type id_session: string
-    :param id_collection: collection ID
-    :type id_collection: int
-    :param id_document: document ID
-    :type id_document: int
+    :param session_id: session ID
+    :type session_id: string
+    :param coll_id: collection ID
+    :type coll_id: int
+    :param doc_id: document ID
+    :type doc_id: int
     :return: tuple made of document's metadata and document's list of transcripts
     :rtype: tuple
     """
-    url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" % (id_collection, id_document)
-    querystring = {"JSESSIONID": id_session}
+    url = "https://transkribus.eu/TrpServer/rest/collections/%s/%s/fulldoc" % (coll_id, doc_id)
+    querystring = {"JSESSIONID": session_id}
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
-    page_list = json_file["pageList"]["pages"]
+    page_l = json_file["pageList"]["pages"]
     metadata = json_file["md"]
-    return metadata, page_list
+    return metadata, page_l
 
 # VERIFICATIONS (status, collection names) and authentification
 errors = []
@@ -111,18 +111,18 @@ if not(isinstance(password, str)):
     errors.append("password must be a string. ")
 if not(isinstance(status, list)):
     errors.append("status must be a list. ")
-if not(isinstance(collectionnames, list)):
-    errors.append("collectionnames must be a list. ")
+if not(isinstance(collections, list)):
+    errors.append("collections must be a list. ")
 
 if len(errors) > 0:
     print("Invalid input: %s" % (str(errors).strip("['']")))
 else:
-    ref_status = ["NEW", "IN PROGRESS", "DONE", "FINAL"]
+    status_ref = ["NEW", "IN PROGRESS", "DONE", "FINAL"]
     status_valid = []
     status_invalid = []
     for stat in status:
         stat_up = stat.upper()
-        if stat_up in ref_status:
+        if stat_up in status_ref:
             status_valid.append(stat_up)
         else:
             status_invalid.append(stat)
@@ -132,37 +132,37 @@ else:
     if len(status_valid) == 0:
         print("No valid status to work with. Please correct list of statuses in config.py!")
     else:
-        all_status = " ".join(status_valid)
-        id_session = authentificate()
-        if id_session:
+        status_all = " ".join(status_valid)
+        session_id = authentificate()
+        if session_id:
             path_to_temp_dir = os.path.join(CWD, "temp")
-            path_to_main_dir = os.path.join(path_to_temp_dir, TIMESTAMP)
-            create_directory(path_to_main_dir)
+            path_to_export_dir = os.path.join(path_to_temp_dir, TIMESTAMP)
+            create_directory(path_to_export_dir)
 
-            user_collections_dict = get_user_s_collections(id_session)
-            if len(user_collections_dict) > 0:
-                id_collection_list = []
-                for input_collection_name in collectionnames:
-                    if input_collection_name in user_collections_dict:
-                        id_collection_list.append((user_collections_dict[input_collection_name], input_collection_name))
+            coll_user_s = get_user_s_collections(session_id)
+            if len(coll_user_s) > 0:
+                coll_id_l = []
+                for coll_input in collections:
+                    if coll_input in coll_user_s:
+                        coll_id_l.append((coll_user_s[coll_input], coll_input))
                     else:
-                        print("User has no access to \"%s\" or this collection does not exist." % input_collection_name)
-                if len(id_collection_list) == 0:
+                        print("User has no access to \"%s\" or this collection does not exist." % coll_input)
+                if len(coll_id_l) == 0:
                     print("No valid collection to work with. Please, correct list of collection names in config.py!")
                 else:
                     # EXPORTING transcriptions from Transkribus by collection, document, page
-                    for id_collection, name_collection in id_collection_list:
-                        id_document_list = list_id_document(id_session, id_collection)
-                        if len(id_document_list) == 0:
-                            print("No document in %s.") % name_collection
+                    for coll_id, coll_name in coll_id_l:
+                        doc_id_l = list_document_id(session_id, coll_id)
+                        if len(doc_id_l) == 0:
+                            print("No document in %s.") % coll_name
                         else:
-                            all_collection = ''
-                            all_collection = all_collection + name_collection + ";\n"
-                            path_to_coll_dir = os.path.join(path_to_main_dir, name_collection)
+                            coll_all = ''
+                            coll_all = coll_all + coll_name + ";\n"
+                            path_to_coll_dir = os.path.join(path_to_export_dir, coll_name)
                             create_directory(path_to_coll_dir)
 
-                            for id_document in id_document_list:
-                                metadata, page_list = list_pages(id_session, id_collection, id_document)
+                            for doc_id in doc_id_l:
+                                metadata, page_l = list_pages(session_id, coll_id, doc_id)
                                 doc_title = metadata["title"]
                                 doc_uploader = metadata["uploader"]
                                 if "desc" in metadata:
@@ -174,16 +174,16 @@ else:
                                 else:
                                     doc_lang = ""
                                 d = doc_title.replace("/", "-").replace("\\", "-")
-                                path_to_doc_dir = os.path.join(path_to_coll_dir, "%s - %s") % (id_document, d)
+                                path_to_doc_dir = os.path.join(path_to_coll_dir, "%s - %s") % (doc_id, d)
 
                                 # ADDING data into PAGE files under 'temp' name space
-                                for page in page_list:
+                                for page in page_l:
                                     page_status = page["tsList"]["transcripts"][0]["status"]
-                                    page_ts_url = page["tsList"]["transcripts"][0]["url"]
-                                    page_img_url = page["url"]
+                                    page_url_ts = page["tsList"]["transcripts"][0]["url"]
+                                    page_url_img = page["url"]
                                     page_nb = page["tsList"]["transcripts"][0]["pageNr"]
                                     if page_status in status_valid:
-                                        exported_transcript = requests.request("GET", page_ts_url)
+                                        exported_transcript = requests.request("GET", page_url_ts)
                                         if not(exported_transcript.status_code == 200):
                                             print("Error : status code %s when exporting page %s of \"%s\"") % (exported_transcript.status_code, page_nb, doc_title)
                                         else:
@@ -223,7 +223,7 @@ else:
                                             if soup.PcGts:
                                                 soup.PcGts["xmlns:temp"] = "temporary"
                                                 soup.Page["temp:id"] = page_nb
-                                                soup.Page["temp:urltoimg"] = page_img_url
+                                                soup.Page["temp:urltoimg"] = page_url_img
                                                 soup.Metadata.append(tag_title)
                                                 soup.Metadata.append(tag_desc)
                                                 soup.Metadata.append(tag_nb)
@@ -234,9 +234,9 @@ else:
                                                 with open(path_to_transcript, "w") as f:
                                                     f.write(str(soup))
                     # Reporting on the export
-                    path_to_report = os.path.join(path_to_main_dir, "general-report.txt")
-                    report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month,now.year, now.hour, now.minute, username, all_status, all_collection)
+                    path_to_report = os.path.join(path_to_export_dir, "general-report.txt")
+                    report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month,now.year, now.hour, now.minute, username, status_all, coll_all)
                     with open(path_to_report, "w") as f:
                         f.write(report)
                     print("Successfully exported transcriptions from Transkribus!")
-                    print("Files are stored in %s directory." % path_to_main_dir)
+                    print("Files are stored in %s directory." % path_to_export_dir)
