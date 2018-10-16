@@ -255,6 +255,8 @@ else:
                     # TRANSFORMING PAGE files to TEI
                     env = dict(os.environ)
                     env["JAVA_OPTS"] = "foo"
+                    path_to_parser = os.path.join(CWD, SAXON_JAR)
+                    path_to_xslt = os.path.join(CWD, PAGE2TEI)
 
                     coll_dir_l = os.listdir(path_to_export_dir)
                     xslt_coll_l = []
@@ -279,7 +281,7 @@ else:
                                 create_directory(xslt_output)
                                 xslt_output = "-o:" + xslt_output
                                 xslt_input = "-s:" + xslt_input
-                                subprocess.call(["java", "-jar", SAXON_JAR, xslt_input, xslt_output, PAGE2TEI], env=env)
+                                subprocess.call(["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
                                 errors += 1
                         if errors == 0:
                             print("Successfully transformed exported PAGE XML files to TEI XML!")
