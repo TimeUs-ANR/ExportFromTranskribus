@@ -281,12 +281,13 @@ else:
                                 create_directory(xslt_output)
                                 xslt_output = "-o:" + xslt_output
                                 xslt_input = "-s:" + xslt_input
-                                subprocess.call(["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
-                                errors += 1
+                                result = subprocess.call(["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
+                                if not result == 0:
+                                	errors += 1
                         if errors == 0:
                             print("Successfully transformed exported PAGE XML files to TEI XML!")
                         else:
-                            print("Encountered errors while transforming exported XML files to TEI XML!")
+                            print("Errors encountered while transforming exported XML files to TEI XML!")
                     print("Files are stored in %s directory." % path_to_export_dir)
 
 
