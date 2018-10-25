@@ -47,8 +47,7 @@ def authentificate():
         session_id = soup.sessionId.string
         print("User successfully authentified.")
     except Exception as e:
-        print("Authentification failed:")
-        print(e)
+        print("Authentification failed: username or password are not correct.")
         session_id = ''
     return session_id
 
