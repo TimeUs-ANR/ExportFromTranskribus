@@ -172,7 +172,7 @@
     </xd:doc>
     <!-- Templates for PAGE, text -->
     <xsl:template match="p:Page" mode="text">
-        <xsl:variable name="numCurr" select="@tu:id"/>
+        <xsl:variable name="numCurr" select="@temp:id"/>
 
         <pb facs="#facs_{$numCurr}" n="{$numCurr}"/>
         <xsl:apply-templates select="p:TextRegion | p:SeparatorRegion | p:GraphicRegion" mode="text">
