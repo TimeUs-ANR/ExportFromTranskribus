@@ -42,11 +42,11 @@
                         <!-- custom -->
                         <editor>Manuela Martini</editor>
                         <!-- end custom -->
-                        <respStmt><name><xsl:value-of select="p:Metadata/temp:uploader"/></name>, <resp>créateur⋅rice du document Transkribus (TRP).</resp></respStmt>
+                        <respStmt><name><xsl:value-of select="p:Metadata/temp:uploader"/></name><resp>créateur⋅rice du document Transkribus (TRP)</resp></respStmt>
                     </titleStmt>
                     <publicationStmt>
                         <!-- custom -->
-                        <bibl><publisher>Time Us</publisher> (<date>2017-2020</date>) : http://timeusage.paris.inria.fr/mediawiki/index.php/Accueil</bibl>
+                        <p>Time Us (2017-2020) : http://timeusage.paris.inria.fr/mediawiki/index.php/Accueil</p>
                         <!-- end custom -->
                     </publicationStmt>
                     <sourceDesc>
@@ -55,7 +55,7 @@
                 </fileDesc>
                 <encodingDesc>
                     <!-- custom -->
-                    <projectDesc>TIME US est un projet ANR dont le but est de reconstituer les rémunérations et les budgets temps des travailleur⋅ses du textile dans quatre villes industrielles française (Lille, Paris, Lyon, Marseille) dans une perspective européenne et de longue durée. Il réunit une équipe pluridisciplinaire d'historiens des techniques, de l'économie et du travail, des spécialistes du traitement automatique des langues et des sociologues spécialistes des budgets familiaux. Il vise à donner des clés pour comprendre le gender gap en analysant les mutations du travail et la répartition du temps et des tâches au sein des ménages pendant la première industrialisation. Pour ce faire, le projet met en place une action de transcription et d'annotation de documents d'archives datés de la fin du XVIIe au début du XXe siècle.</projectDesc>
+                    <projectDesc><p>TIME US est un projet ANR dont le but est de reconstituer les rémunérations et les budgets temps des travailleur⋅ses du textile dans quatre villes industrielles française (Lille, Paris, Lyon, Marseille) dans une perspective européenne et de longue durée. Il réunit une équipe pluridisciplinaire d'historiens des techniques, de l'économie et du travail, des spécialistes du traitement automatique des langues et des sociologues spécialistes des budgets familiaux. Il vise à donner des clés pour comprendre le gender gap en analysant les mutations du travail et la répartition du temps et des tâches au sein des ménages pendant la première industrialisation. Pour ce faire, le projet met en place une action de transcription et d'annotation de documents d'archives datés de la fin du XVIIe au début du XXe siècle.</p></projectDesc>
                     <editorialDecl>
                         <p>Les transcriptions et leur annotations sont réalisées à l'aide de la plate-forme Transkribus.</p>
                         <p>Statut de la transcription lors de son export : "<xsl:value-of select="p:Metadata/temp:tsStatus"/>".</p>
@@ -66,7 +66,7 @@
                     <profileDesc>
                         <langUsage>
                             <xsl:for-each select="p:Metadata/temp:language">
-                                <language><xsl:value-of select="."/></language>
+                                <language ident=""><xsl:value-of select="."/></language>
                             </xsl:for-each>
                         </langUsage>
                     </profileDesc>
