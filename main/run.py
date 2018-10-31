@@ -6,7 +6,7 @@ import os
 import json
 import subprocess
 from bs4 import BeautifulSoup
-from config import username, password, status, collections
+from config import username, password, status, collections, documents
 
 # CONSTANTS
 now = datetime.datetime.now()
@@ -47,7 +47,7 @@ def authentificate():
         session_id = soup.sessionId.string
         print("User successfully authentified.")
     except Exception as e:
-        print("Authentification failed: username or password are not correct.")
+        print("Authentification failed: username or password are not correct. Check {}/config.py".format(CWD))
         session_id = ''
     return session_id
 
@@ -157,7 +157,11 @@ else:
                 else:
                     # EXPORTING transcriptions from Transkribus by collection, document, page
                     for coll_id, coll_name in coll_id_l:
-                        doc_id_l = list_document_id(session_id, coll_id)
+                        # Introducing the collections parameter
+                        if len(collections) == 0:
+                            doc_id_l = list_document_id(session_id, coll_id)
+                        else:
+                            doc_id_l = documents
                         if len(doc_id_l) == 0:
                             print("No document in %s.") % coll_name
                         else:
@@ -171,7 +175,7 @@ else:
                                 doc_title = metadata["title"]
                                 doc_uploader = metadata["uploader"]
                                 if "desc" in metadata:
-                                   doc_desc = metadata["desc"]
+                                    doc_desc = metadata["desc"]
                                 else:
                                     doc_desc = "No description"
                                 if "language" in metadata:
@@ -282,11 +286,9 @@ else:
                                 xslt_input = "-s:" + xslt_input
                                 result = subprocess.call(["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
                                 if not result == 0:
-                                	errors += 1
+                                    errors += 1
                         if errors == 0:
                             print("Successfully transformed exported PAGE XML files to TEI XML!")
                         else:
                             print("Errors encountered while transforming exported XML files to TEI XML!")
                     print("Files are stored in %s directory." % path_to_export_dir)
-
-
