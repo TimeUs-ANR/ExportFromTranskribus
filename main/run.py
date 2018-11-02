@@ -213,12 +213,10 @@ else:
                                     if page_status in status_valid:
                                         exported_transcript = requests.request("GET", page_url_ts)
                                         if not (exported_transcript.status_code == 200):
-                                            print("Error : status code %s when exporting page %s of \"%s\"") % (
-                                            exported_transcript.status_code, page_nb, doc_title)
+                                            print("Error : status code %s when exporting page %s of \"%s\"") % (exported_transcript.status_code, page_nb, doc_title)
                                         else:
                                             create_directory(path_to_doc_dir)
-                                            path_to_transcript = os.path.join(path_to_doc_dir, "%s - %s.xml") % (
-                                            page_nb, page_status)
+                                            path_to_transcript = os.path.join(path_to_doc_dir, "%s - %s.xml") % (page_nb, page_status)
 
                                             t_title = "<title>%s</title>" % doc_title
                                             tag_title = BeautifulSoup(t_title, "xml")
@@ -246,8 +244,7 @@ else:
                                             tag_status.name = "temp:tsStatus"
 
                                             if len(doc_lang) > 0:
-                                                doc_lang = ''.join(
-                                                    ["<language>%s<language>" % l.strip() for l in doc_lang.split(",")])
+                                                doc_lang = ''.join(["<language>%s<language>" % l.strip() for l in doc_lang.split(",")])
                                                 doc_lang = "<languages>%s</languages>" % doc_lang
                                                 tag_lang = BeautifulSoup(doc_lang, "xml")
                                                 tag_lang = tag_lang.languages.extract()
@@ -273,8 +270,7 @@ else:
                     # REPORTING on the export
                     if len(coll_all) > 0:
                         path_to_report = os.path.join(path_to_export_dir, "general-report.txt")
-                        report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (
-                        now.day, now.month, now.year, now.hour, now.minute, username, status_all, coll_all)
+                        report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month, now.year, now.hour, now.minute, username, status_all, coll_all)
                         with open(path_to_report, "w") as f:
                             f.write(report)
                         print("Successfully exported transcriptions from Transkribus!")
