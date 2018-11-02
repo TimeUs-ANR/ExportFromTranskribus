@@ -15,7 +15,7 @@ CWD = os.path.dirname(os.path.abspath(__file__))
 SAXON_JAR = "saxon9he.jar"      # Change value if using a different version of Saxon
                                 # Saxon file must be placed in "main/" directory
 PAGE2TEI = "page2tei_TU.xsl"    # Change value if using a different version of Page2tei XSLT
-                                #  Page2tei file must be place in "main/" directory
+                                # Page2tei file must be place in "main/" directory
 
 
 # INTERACTION WITH OS
