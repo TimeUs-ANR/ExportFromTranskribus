@@ -96,13 +96,11 @@ def verify_documents_id(id_list):
     :return: list of document ID
     :rtype: list
     """
-    print(id_list)
     url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % coll_id
     querystring = {"JSESSIONID": session_id}
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
     doc_id_l = [document["docId"] for document in json_file if str(document["docId"]) in id_list]
-    print(doc_id_l)
     return doc_id_l
 
 
