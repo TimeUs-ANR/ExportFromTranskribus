@@ -10,8 +10,8 @@ password = ""
 # e.g. - collections = ["collectionA", "collectionB", "collectionC"]
 collections = [""]
 
-#names of targeted documents of the selected collection
-# documents = ["35199", "36685"]
+# names of targeted documents of the selected collection
+# e.g. - documents = ["35199", "36685"]
 documents = [""]
 
 # target status(es) / statut(s) ciblé(s)
