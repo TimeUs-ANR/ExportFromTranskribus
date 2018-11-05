@@ -6,7 +6,7 @@ import os
 import json
 import subprocess
 from bs4 import BeautifulSoup
-from config import username, password, status, collections
+from config import username, password, status, collections, documents
 
 # CONSTANTS
 now = datetime.datetime.now()
@@ -47,7 +47,7 @@ def authentificate():
         session_id = soup.sessionId.string
         print("User successfully authentified.")
     except Exception as e:
-        print("Authentification failed: username or password are not correct.")
+        print("Authentification failed: username or password are not correct. Check {}/config.py".format(CWD))
         session_id = ''
     return session_id
 
@@ -66,7 +66,7 @@ def get_user_s_collections(session_id):
     json_file = json.loads(response.text)
 
     coll_user_s = {}
-    [coll_user_s.update({collection["colName"] : collection["colId"]}) for collection in json_file]
+    [coll_user_s.update({collection["colName"]: collection["colId"]}) for collection in json_file]
     return coll_user_s
 
 
@@ -85,6 +85,22 @@ def list_document_id(session_id, coll_id):
     response = requests.request("GET", url, params=querystring)
     json_file = json.loads(response.text)
     doc_id_l = [document["docId"] for document in json_file]
+    return doc_id_l
+
+
+def verify_documents_id(id_list):
+    """ Verify the validity of document ids.
+
+    :param id_list: list of document ID
+    :type id_list: list
+    :return: list of document ID
+    :rtype: list
+    """
+    url = "https://transkribus.eu/TrpServer/rest/collections/%s/list" % coll_id
+    querystring = {"JSESSIONID": session_id}
+    response = requests.request("GET", url, params=querystring)
+    json_file = json.loads(response.text)
+    doc_id_l = [document["docId"] for document in json_file if str(document["docId"]) in id_list]
     return doc_id_l
 
 
@@ -108,15 +124,16 @@ def list_pages(session_id, coll_id, doc_id):
     metadata = json_file["md"]
     return metadata, page_l
 
+
 # VERIFICATIONS (status, collection names) and authentification
 errors = []
-if not(isinstance(username, str)):
+if not (isinstance(username, str)):
     errors.append("username must be a string. ")
-if not(isinstance(password, str)):
+if not (isinstance(password, str)):
     errors.append("password must be a string. ")
-if not(isinstance(status, list)):
+if not (isinstance(status, list)):
     errors.append("status must be a list. ")
-if not(isinstance(collections, list)):
+if not (isinstance(collections, list)):
     errors.append("collections must be a list. ")
 
 if len(errors) > 0:
@@ -147,6 +164,7 @@ else:
             coll_user_s = get_user_s_collections(session_id)
             if len(coll_user_s) > 0:
                 coll_id_l = []
+                coll_all = ''
                 for coll_input in collections:
                     if coll_input in coll_user_s:
                         coll_id_l.append((coll_user_s[coll_input], coll_input))
@@ -157,11 +175,14 @@ else:
                 else:
                     # EXPORTING transcriptions from Transkribus by collection, document, page
                     for coll_id, coll_name in coll_id_l:
-                        doc_id_l = list_document_id(session_id, coll_id)
-                        if len(doc_id_l) == 0:
-                            print("No document in %s.") % coll_name
+                        # Introducing the documents parameter
+                        if len(documents) == 0 or len(documents[0]) == 0:
+                            doc_id_l = list_document_id(session_id, coll_id)
                         else:
-                            coll_all = ''
+                            doc_id_l = verify_documents_id(documents)
+                        if len(doc_id_l) == 0:
+                            print("No document in %s, or no valid document IDs in input." % coll_name)
+                        else:
                             coll_all = coll_all + coll_name + ";\n"
                             path_to_coll_dir = os.path.join(path_to_export_dir, coll_name)
                             create_directory(path_to_coll_dir)
@@ -171,7 +192,7 @@ else:
                                 doc_title = metadata["title"]
                                 doc_uploader = metadata["uploader"]
                                 if "desc" in metadata:
-                                   doc_desc = metadata["desc"]
+                                    doc_desc = metadata["desc"]
                                 else:
                                     doc_desc = "No description"
                                 if "language" in metadata:
@@ -189,7 +210,7 @@ else:
                                     page_nb = page["tsList"]["transcripts"][0]["pageNr"]
                                     if page_status in status_valid:
                                         exported_transcript = requests.request("GET", page_url_ts)
-                                        if not(exported_transcript.status_code == 200):
+                                        if not (exported_transcript.status_code == 200):
                                             print("Error : status code %s when exporting page %s of \"%s\"") % (exported_transcript.status_code, page_nb, doc_title)
                                         else:
                                             create_directory(path_to_doc_dir)
@@ -245,48 +266,51 @@ else:
                                                 with open(path_to_transcript, "w") as f:
                                                     f.write(str(soup))
                     # REPORTING on the export
-                    path_to_report = os.path.join(path_to_export_dir, "general-report.txt")
-                    report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month,now.year, now.hour, now.minute, username, status_all, coll_all)
-                    with open(path_to_report, "w") as f:
-                        f.write(report)
-                    print("Successfully exported transcriptions from Transkribus!")
+                    if len(coll_all) > 0:
+                        path_to_report = os.path.join(path_to_export_dir, "general-report.txt")
+                        report = "Export request ran on %s/%s/%s at %s:%s.\nFrom user '%s', exported transcripts with status '%s' from following collections:\n %s" % (now.day, now.month, now.year, now.hour, now.minute, username, status_all, coll_all)
+                        with open(path_to_report, "w") as f:
+                            f.write(report)
+                        print("Successfully exported transcriptions from Transkribus!")
 
                     # TRANSFORMING PAGE files to TEI
-                    env = dict(os.environ)
-                    env["JAVA_OPTS"] = "foo"
-                    path_to_parser = os.path.join(CWD, SAXON_JAR)
-                    path_to_xslt = os.path.join(CWD, PAGE2TEI)
+                        env = dict(os.environ)
+                        env["JAVA_OPTS"] = "foo"
+                        path_to_parser = os.path.join(CWD, SAXON_JAR)
+                        path_to_xslt = os.path.join(CWD, PAGE2TEI)
 
-                    coll_dir_l = os.listdir(path_to_export_dir)
-                    xslt_coll_l = []
-                    for item in coll_dir_l:
-                        path_abs = os.path.join(path_to_export_dir, item)
-                        if os.path.isdir(path_abs) is True:
-                            xslt_coll_l.append(path_abs)
+                        coll_dir_l = os.listdir(path_to_export_dir)
+                        xslt_coll_l = []
+                        for item in coll_dir_l:
+                            path_abs = os.path.join(path_to_export_dir, item)
+                            if os.path.isdir(path_abs) is True:
+                                xslt_coll_l.append(path_abs)
 
-                    if len(coll_dir_l) > 0:
-                        xslt_doc_l = []
-                        for coll_dir in xslt_coll_l:
-                            doc_dir_l = os.listdir(coll_dir)
-                            for item in doc_dir_l:
-                                path_abs = os.path.join(coll_dir, item)
-                                if os.path.isdir(path_abs) is True:
-                                    xslt_doc_l.append(item)
+                        if len(coll_dir_l) > 0:
+                            xslt_doc_l = []
+                            for coll_dir in xslt_coll_l:
+                                doc_dir_l = os.listdir(coll_dir)
+                                for item in doc_dir_l:
+                                    path_abs = os.path.join(coll_dir, item)
+                                    if os.path.isdir(path_abs) is True:
+                                        xslt_doc_l.append(item)
 
-                            errors = 0
-                            for xslt_input in xslt_doc_l:
-                                xslt_output = os.path.join(coll_dir, "TEI - %s" % xslt_input)
-                                xslt_input = os.path.join(coll_dir, xslt_input)
-                                create_directory(xslt_output)
-                                xslt_output = "-o:" + xslt_output
-                                xslt_input = "-s:" + xslt_input
-                                result = subprocess.call(["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
-                                if not result == 0:
-                                	errors += 1
-                        if errors == 0:
-                            print("Successfully transformed exported PAGE XML files to TEI XML!")
-                        else:
-                            print("Errors encountered while transforming exported XML files to TEI XML!")
-                    print("Files are stored in %s directory." % path_to_export_dir)
+                                errors = 0
+                                for xslt_input in xslt_doc_l:
+                                    xslt_output = os.path.join(coll_dir, "TEI - %s" % xslt_input)
+                                    xslt_input = os.path.join(coll_dir, xslt_input)
+                                    create_directory(xslt_output)
+                                    xslt_output = "-o:" + xslt_output
+                                    xslt_input = "-s:" + xslt_input
+                                    result = subprocess.call(
+                                        ["java", "-jar", path_to_parser, xslt_input, xslt_output, path_to_xslt], env=env)
+                                    if not result == 0:
+                                        errors += 1
+                            if errors == 0:
+                                print("Successfully transformed exported PAGE XML files to TEI XML!")
+                            else:
+                                print("Errors encountered while transforming exported XML files to TEI XML!")
+                        print("Files are stored in %s directory." % path_to_export_dir)
 
-
+                    else:
+                        print("Could not export transcriptions from Transkribus.")
