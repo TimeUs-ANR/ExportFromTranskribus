@@ -139,7 +139,7 @@ if not (isinstance(collections, list)):
 if len(errors) > 0:
     print("Invalid input: %s" % (str(errors).strip("['']")))
 else:
-    status_ref = ["NEW", "IN_PROGRESS", "DONE", "FINAL"]
+    status_ref = ["NEW", "IN_PROGRESS", "DONE", "FINAL", "GT"]
     status_valid = []
     status_invalid = []
     for stat in status:
