@@ -216,6 +216,12 @@ else:
                                             create_directory(path_to_doc_dir)
                                             path_to_transcript = os.path.join(path_to_doc_dir, "%s - %s.xml") % (page_nb, page_status)
 
+                                            #Download the corresponding image
+                                            path_to_img = os.path.join(path_to_doc_dir, "%s") % (page["imgFileName"])
+                                            response = requests.get(page_url_img)
+                                            with open(path_to_img, 'wb') as file:
+                                                file.write(response.content)
+
                                             t_title = "<title>%s</title>" % doc_title
                                             tag_title = BeautifulSoup(t_title, "xml")
                                             tag_title = tag_title.title.extract()
